@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelFiltersGenerator.Vsix", "ModelFiltersGenerator.Vsix\ModelFiltersGenerator.Vsix.csproj", "{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelFiltersGenerator", "ModelFiltersGenerator\ModelFiltersGenerator.csproj", "{F64D0B1D-0A38-4E16-9FE9-D700D9B09DC9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F64D0B1D-0A38-4E16-9FE9-D700D9B09DC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F64D0B1D-0A38-4E16-9FE9-D700D9B09DC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F64D0B1D-0A38-4E16-9FE9-D700D9B09DC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F64D0B1D-0A38-4E16-9FE9-D700D9B09DC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
