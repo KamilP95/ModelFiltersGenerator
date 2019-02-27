@@ -3,7 +3,7 @@
     <Metadata>
         <Identity Id="ModelFiltersGenerator.Vsix.87576024-8dec-48c0-8699-fcbeaaafa20e" Version="1.0" Language="en-US" Publisher="Kamil Partyka" />
         <DisplayName>ModelFiltersGenerator</DisplayName>
-        <Description xml:space="preserve"></Description>
+        <Description xml:space="preserve">Extension for generating basic model filtersExtension</Description>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0, 16.0)" />
