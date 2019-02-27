@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.421
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelFiltersGenerator.Vsix", "ModelFiltersGenerator.Vsix\ModelFiltersGenerator.Vsix.csproj", "{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC75A0F2-F9D1-4A79-9CF7-1616A6FF03AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {769B738A-2ACE-47C1-A3CA-CD997DBFE77A}
+	EndGlobalSection
+EndGlobal
