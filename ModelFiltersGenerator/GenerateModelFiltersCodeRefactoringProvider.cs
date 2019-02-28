@@ -50,18 +50,22 @@ namespace ModelFiltersGenerator
             context.RegisterRefactoring(action);
         }
 
-        private Task<Document> GenerateModelFiltersAsync(
+        private Task<Solution> GenerateModelFiltersAsync(
             Document document,
             CompilationUnitSyntax root,
             SyntaxToken classNameToken,
             IEnumerable<PropertyInfo> properties,
             CancellationToken cancellationToken)
         {
+            var solution = document.Project.Solution;
             var className = classNameToken.Text;
+            solution = solution
+                    .AddDocument(DocumentId.CreateNewId(document.Project.Id),
+                        className + "Filters",
+                        CodeGenerator.CreateRoot());
+            var newDocument = CodeGenerator.GenerateFilters(document, root, className, properties);
 
-            document = CodeGenerator.GenerateFilters(document, root, className, properties);
-
-            return Task.FromResult(document);
+            return Task.FromResult(solution);
         }
     }
 }

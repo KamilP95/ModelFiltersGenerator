@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -48,6 +49,54 @@ namespace ModelFiltersGenerator
                 .WithAccessorList(AccessorList(List(new[] { getter, setter })))
                 .WithTrailingTrivia(Tab)
                 .WithLeadingTrivia(EndOfLine("\r\n"));
+        }
+
+        internal static CompilationUnitSyntax CreateRoot()
+        {
+            var root = CompilationUnit()
+                .WithUsings(CreateUsings("System", "System.Linq", "System.Collections.Generic"))
+                .WithMembers(List<MemberDeclarationSyntax>(new[]
+                    {NamespaceDeclaration(IdentifierName("GeneratedNamespace"))}));
+
+            return root;
+        }
+
+        internal static SyntaxList<UsingDirectiveSyntax> CreateUsings(params string[] usings)
+        {
+            var usingsList = new List<UsingDirectiveSyntax>();
+
+            foreach (var @using in usings)
+            {
+                var segments = @using.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (segments.Length == 0)
+                {
+                    continue;
+                }
+
+                var usingName = GetQualifiedName(segments);
+                usingsList.Add(UsingDirective(usingName));
+            }
+
+            return List(usingsList);
+        }
+
+        private static NameSyntax GetQualifiedName(IReadOnlyList<string> segments)
+        {
+            if (segments.Count == 0)
+            {
+                return default(NameSyntax);
+            }
+
+            if (segments.Count == 1)
+            {
+                return IdentifierName(segments[0]);
+            }
+
+            var lastSegment = segments.Last();
+            var otherSegments = segments.Take(segments.Count - 1).ToArray();
+
+            return QualifiedName(GetQualifiedName(otherSegments), IdentifierName(lastSegment));
         }
     }
 }
