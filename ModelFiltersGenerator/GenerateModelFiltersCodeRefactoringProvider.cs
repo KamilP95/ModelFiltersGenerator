@@ -35,7 +35,7 @@ namespace ModelFiltersGenerator
                 return;
             }
 
-            var properties = CodeAnalyzer.GetPropertiesInfo(token.Parent, semanticModel);
+            var properties = CodeAnalyzer.GetPropertiesInfo(token.Parent, semanticModel).ToArray();
 
             if (!properties.Any())
             {
@@ -58,12 +58,12 @@ namespace ModelFiltersGenerator
             CancellationToken cancellationToken)
         {
             var solution = document.Project.Solution;
-            var className = classNameToken.Text;
-            solution = solution
-                    .AddDocument(DocumentId.CreateNewId(document.Project.Id),
-                        className + "Filters",
-                        CodeGenerator.CreateRoot());
-            var newDocument = CodeGenerator.GenerateFilters(document, root, className, properties);
+            var className = classNameToken.Text + "Filters";
+            var filterClass = CodeGenerator.CreateFilterClass(className, properties);
+            var filtersRoot = CodeGenerator.CreateRoot(root.GetNamespaceName(), filterClass);
+            var documentId = DocumentId.CreateNewId(document.Project.Id);
+
+            solution = solution.AddDocument(documentId, className, filtersRoot);
 
             return Task.FromResult(solution);
         }

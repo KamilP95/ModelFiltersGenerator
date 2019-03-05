@@ -5,10 +5,12 @@ namespace ModelFiltersGenerator
 {
     internal class PropertyInfo
     {
-        public PropertyDeclarationSyntax PropertyDeclaration { get; set; }
+        public string Name { get; set; }
 
-        public ITypeSymbol Type { get; set; }
+        public ITypeSymbol TypeInfo { get; set; }
 
-        public string PropertyName => PropertyDeclaration.Identifier.Text;
+        public TypeSyntax TypeSyntax { get; set; }
+
+        public bool RangeFilter { get; set; }
     }
 }

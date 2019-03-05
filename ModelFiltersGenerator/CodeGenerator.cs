@@ -13,28 +13,33 @@ namespace ModelFiltersGenerator
         internal static SyntaxToken PublicKeywordToken => Token(SyntaxKind.PublicKeyword);
         internal static SyntaxToken SemicolonToken => Token(SyntaxKind.SemicolonToken);
 
-        internal static Document GenerateFilters(
-            Document document,
-            CompilationUnitSyntax root,
-            string className,
-            IEnumerable<PropertyInfo> properties)
+        internal static ClassDeclarationSyntax CreateFilterClass(string className, IEnumerable<PropertyInfo> properties)
         {
-            var namespaceNode = root.ChildNodes().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
+            var filterProperties = new SyntaxList<MemberDeclarationSyntax>(properties.SelectMany(CreateFilterProperties));
 
-            if (namespaceNode == null)
-            {
-                return document;
-            }
-
-            var filterProperties = new SyntaxList<MemberDeclarationSyntax>(
-                properties.Select(p => CreateAutoProperty(p.PropertyName, p.PropertyDeclaration.Type)));
-
-            var filterClass = ClassDeclaration(className + "Filter")
+            var filterClass = ClassDeclaration(className)
                 .WithMembers(filterProperties)
                 .WithModifiers(TokenList(PublicKeywordToken));
 
-            root = root.ReplaceNode(namespaceNode, namespaceNode.AddMembers(filterClass));
-            return document.WithSyntaxRoot(root);
+            return filterClass;
+        }
+
+        internal static IEnumerable<PropertyDeclarationSyntax> CreateFilterProperties(PropertyInfo property)
+        {
+            var propertyType = property.TypeInfo.IsValueType
+                ? NullableType(property.TypeSyntax)
+                : property.TypeSyntax;
+
+            if (property.RangeFilter)
+            {
+                return new[]
+                {
+                    CreateAutoProperty(property.Name + "From", propertyType),
+                    CreateAutoProperty(property.Name + "To", propertyType)
+                };
+            }
+
+            return new[] { CreateAutoProperty(property.Name, propertyType) };
         }
 
         internal static PropertyDeclarationSyntax CreateAutoProperty(string name, TypeSyntax type)
@@ -51,12 +56,14 @@ namespace ModelFiltersGenerator
                 .WithLeadingTrivia(EndOfLine("\r\n"));
         }
 
-        internal static CompilationUnitSyntax CreateRoot()
+        internal static CompilationUnitSyntax CreateRoot(string namespaceName, params MemberDeclarationSyntax[] members)
         {
+            var usings = CreateUsings("System", "System.Linq", "System.Collections.Generic");
+            var @namespace = CreateNamespace(namespaceName, members);
+
             var root = CompilationUnit()
-                .WithUsings(CreateUsings("System", "System.Linq", "System.Collections.Generic"))
-                .WithMembers(List<MemberDeclarationSyntax>(new[]
-                    {NamespaceDeclaration(IdentifierName("GeneratedNamespace"))}));
+                .WithUsings(usings)
+                .WithMembers(SingletonList<MemberDeclarationSyntax>(@namespace));
 
             return root;
         }
@@ -81,11 +88,21 @@ namespace ModelFiltersGenerator
             return List(usingsList);
         }
 
-        private static NameSyntax GetQualifiedName(IReadOnlyList<string> segments)
+        internal static NamespaceDeclarationSyntax CreateNamespace(string name, params MemberDeclarationSyntax[] members)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Name cannot be empty.", nameof(name));
+            }
+
+            return NamespaceDeclaration(GetQualifiedName(name)).WithMembers(List(members));
+        }
+
+        internal static NameSyntax GetQualifiedName(IReadOnlyList<string> segments)
         {
             if (segments.Count == 0)
             {
-                return default(NameSyntax);
+                throw new ArgumentException("Segments must have at least one element.", nameof(segments));
             }
 
             if (segments.Count == 1)
@@ -97,6 +114,11 @@ namespace ModelFiltersGenerator
             var otherSegments = segments.Take(segments.Count - 1).ToArray();
 
             return QualifiedName(GetQualifiedName(otherSegments), IdentifierName(lastSegment));
+        }
+
+        internal static NameSyntax GetQualifiedName(string name)
+        {
+            return GetQualifiedName(name.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries));
         }
     }
 }
