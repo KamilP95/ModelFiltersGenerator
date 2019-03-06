@@ -36,8 +36,8 @@ namespace ModelFiltersGenerator
                 {
                     Name = prop.Identifier.Text,
                     TypeSyntax = prop.Type,
-                    TypeInfo = semanticModel.GetDeclaredSymbol(prop).Type,
-                    RangeFilter = semanticModel.GetDeclaredSymbol(prop).Type.SpecialType == SupprotedTypes.DateTime
+                    TypeInfo = semanticModel?.GetDeclaredSymbol(prop).Type,
+                    RangeFilter = semanticModel?.GetDeclaredSymbol(prop).Type.SpecialType == SupprotedTypes.DateTime
                 })
                 .Where(p => SupprotedTypes.All.Contains(p.TypeInfo.SpecialType));
 
@@ -67,6 +67,16 @@ namespace ModelFiltersGenerator
                    || type.SpecialType == SupprotedTypes.Int16
                    || type.SpecialType == SupprotedTypes.Int32
                    || type.SpecialType == SupprotedTypes.Int64;
+        }
+
+        internal static bool IsString(this ITypeSymbol type)
+        {
+            return type.SpecialType == SupprotedTypes.String;
+        }
+
+        internal static bool IsBool(this ITypeSymbol type)
+        {
+            return type.SpecialType == SupprotedTypes.Boolean;
         }
     }
 }

@@ -44,7 +44,7 @@ namespace ModelFiltersGenerator
 
             var action = CodeAction.Create(
                 "Create filters for model",
-                ct => GenerateModelFiltersAsync(document, root, token, properties, ct),
+                ct => GenerateModelFiltersAsync(document, root, token, properties, semanticModel, ct),
                 equivalenceKey: nameof(GenerateModelFiltersCodeRefactoringProvider));
 
             context.RegisterRefactoring(action);
@@ -55,17 +55,20 @@ namespace ModelFiltersGenerator
             CompilationUnitSyntax root,
             SyntaxToken classNameToken,
             IEnumerable<PropertyInfo> properties,
+            SemanticModel semanticModel,
             CancellationToken cancellationToken)
         {
-            var solution = document.Project.Solution;
-            var className = classNameToken.Text + "Filters";
-            var filterClass = CodeGenerator.CreateFilterClass(className, properties);
-            var filtersRoot = CodeGenerator.CreateRoot(root.GetNamespaceName(), filterClass);
-            var documentId = DocumentId.CreateNewId(document.Project.Id);
+            return Task.Run(() =>
+            {
+                var solution = document.Project.Solution;
+                var className = classNameToken.Text;
+                var filterModelClass = CodeGenerator.CreateFilterModelClass(className + "Filters", properties);
+                var filterExtensionsClass = CodeGenerator.CreateFilterExtensionsClass(className, properties);
+                var filtersRoot = CodeGenerator.CreateRoot(root.GetNamespaceName(), filterModelClass, filterExtensionsClass);
+                var documentId = DocumentId.CreateNewId(document.Project.Id);
 
-            solution = solution.AddDocument(documentId, className, filtersRoot);
-
-            return Task.FromResult(solution);
+                return solution.AddDocument(documentId, className + "Filters", filtersRoot);
+            }, cancellationToken);
         }
     }
 }
