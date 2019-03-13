@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace ModelFiltersGenerator
+namespace ModelFiltersGenerator.Models
 {
     internal class PropertyInfo
     {

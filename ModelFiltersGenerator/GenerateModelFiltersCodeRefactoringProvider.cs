@@ -6,6 +6,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using ModelFiltersGenerator.Generators;
+using ModelFiltersGenerator.Models;
 
 namespace ModelFiltersGenerator
 {
@@ -62,9 +64,9 @@ namespace ModelFiltersGenerator
             {
                 var solution = document.Project.Solution;
                 var className = classNameToken.Text;
-                var filterModelClass = CodeGenerator.CreateFilterModelClass(className + "Filters", properties);
-                var filterExtensionsClass = CodeGenerator.CreateFilterExtensionsClass(className, properties);
-                var filtersRoot = CodeGenerator.CreateRoot(root.GetNamespaceName(), filterModelClass, filterExtensionsClass);
+                var filterModelClass = FilterModelGenerator.FilterModelClass(className, properties);
+                var filterExtensionsClass = FilterExtensionsGenerator.FilterExtensionsClass(className, properties);
+                var filtersRoot = BaseSyntaxGenerator.CompilationUnit(root.GetNamespaceName(), filterModelClass, filterExtensionsClass);
                 var documentId = DocumentId.CreateNewId(document.Project.Id);
 
                 return solution.AddDocument(documentId, className + "Filters", filtersRoot);
