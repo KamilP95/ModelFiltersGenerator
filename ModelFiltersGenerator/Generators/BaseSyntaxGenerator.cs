@@ -75,7 +75,7 @@ namespace ModelFiltersGenerator.Generators
 
         internal static ExpressionSyntax SimpleMemberAccess(string expression)
         {
-            return QualifiedName(expression.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries));
+            return SimpleMemberAccess(expression.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
         internal static ArgumentListSyntax SeparatedArgumentList(params ExpressionSyntax[] arguments)
@@ -91,6 +91,14 @@ namespace ModelFiltersGenerator.Generators
             }
 
             return ArgumentList(SeparatedList(arguments.Select(Argument)));
+        }
+
+        internal static ArgumentListSyntax ArgumentListWithEoL(params ExpressionSyntax[] arguments)
+        {
+            return SeparatedArgumentList(arguments)
+                .WithCloseParenToken(
+                    Tokens.CloseParenthesis
+                        .WithTrailingTrivia(EndOfLine(Environment.NewLine)));
         }
 
         internal static CompilationUnitSyntax CompilationUnit(string namespaceName, params MemberDeclarationSyntax[] members)

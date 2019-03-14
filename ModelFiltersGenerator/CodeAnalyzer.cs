@@ -34,12 +34,12 @@ namespace ModelFiltersGenerator
                                && !prop.Modifiers.Any(SyntaxKind.StaticKeyword)
                                && !prop.Modifiers.Any(SyntaxKind.AbstractKeyword))
                 .Select(prop => new PropertyInfo
-                {
-                    Name = prop.Identifier.Text,
-                    TypeSyntax = prop.Type,
-                    TypeInfo = semanticModel?.GetDeclaredSymbol(prop).Type,
-                    RangeFilter = semanticModel?.GetDeclaredSymbol(prop).Type.SpecialType == SupprotedTypes.DateTime
-                })
+                (
+                    prop.Identifier.Text,
+                    prop.Type,
+                    semanticModel?.GetDeclaredSymbol(prop).Type,
+                    semanticModel?.GetDeclaredSymbol(prop).Type.SpecialType == SupprotedTypes.DateTime
+                ))
                 .Where(p => SupprotedTypes.All.Contains(p.TypeInfo.SpecialType));
 
             return properties;

@@ -46,6 +46,7 @@ namespace ModelFiltersGenerator.Generators
                 if (modelProperty.TypeInfo.IsString())
                 {
                     filterMethods.Add(StringContainsFilterExtensionMethod(collectionParameter, modelProperty));
+                    continue;
                 }
 
                 filterMethods.Add(EqualsFilterExtensionMethod(collectionParameter, modelProperty));
@@ -69,7 +70,7 @@ namespace ModelFiltersGenerator.Generators
                 .WithModifiers(TokenList(Tokens.PublicKeyword, Tokens.StaticKeyword))
                 .WithBody(body)
                 .WithTrailingTrivia(Tab)
-                .WithLeadingTrivia(EndOfLine("\r\n"));
+                .WithLeadingTrivia(EndOfLine(Environment.NewLine), EndOfLine(Environment.NewLine));
         }
 
         internal static MethodDeclarationSyntax FilterExtensionMethod(
@@ -91,12 +92,17 @@ namespace ModelFiltersGenerator.Generators
             ExpressionSyntax filterExpression,
             ExpressionSyntax collectionExpression)
         {
+
+            var indentationTrivia = Trivia.Indentation(4).ToList();
+            indentationTrivia.Insert(0, Trivia.EndOfLine);
             return Block(
                 ReturnStatement(
                     ConditionalExpression(
-                        condition.WithLeadingTrivia(EndOfLine("\r\n")),
-                        filterExpression.WithTrailingTrivia(Tab).WithLeadingTrivia(EndOfLine("\r\n")),
-                        collectionExpression.WithTrailingTrivia(Tab).WithLeadingTrivia(EndOfLine("\r\n"))))
+                        condition,
+                        Tokens.QuestionMark.WithLeadingTrivia(indentationTrivia),
+                        filterExpression,
+                        Tokens.Colon.WithLeadingTrivia(indentationTrivia),
+                        collectionExpression))
             );
         }
 
@@ -171,7 +177,7 @@ namespace ModelFiltersGenerator.Generators
             PropertyInfo modelProperty)
         {
             var filterParameterName = modelProperty.Name.ToCamelCase();
-            var filterParameter = BaseSyntaxGenerator.Parameter(modelProperty.TypeSyntax, filterParameterName);
+            var filterParameter = BaseSyntaxGenerator.Parameter(NullableType(modelProperty.TypeSyntax), filterParameterName);
             var collectionName = collectionParameter.Identifier.Text;
 
             var condition = NullableHasValueCheckExpression(filterParameterName);
@@ -197,7 +203,7 @@ namespace ModelFiltersGenerator.Generators
             var filterPropertiesNames = modelProperties
                 .SelectMany(p =>
                     p.RangeFilter
-                        ? new[] { p.Name + "From", p.Name = "To" }
+                        ? new[] { p.Name + "From", p.Name + "To" }
                         : new[] { p.Name })
                 .ToList();
 
@@ -210,7 +216,7 @@ namespace ModelFiltersGenerator.Generators
                 new[] { BaseSyntaxGenerator.Parameter(filterModelClass, "filters") },
                 body);
 
-            InvocationExpressionSyntax FilterChainInvocation(List<string> filterProperties)
+            InvocationExpressionSyntax FilterChainInvocation(IReadOnlyCollection<string> filterProperties)
             {
                 string propertyName;
 
@@ -218,14 +224,24 @@ namespace ModelFiltersGenerator.Generators
                 {
                     propertyName = filterProperties.First();
                     return InvocationExpression(
-                        BaseSyntaxGenerator.SimpleMemberAccess($"{collectionName}.FilterBy{propertyName}"),
-                        BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
+                            MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                IdentifierName(collectionName).WithTrailingTrivia(EndOfLine(Environment.NewLine)),
+                                Tokens.Dot.WithLeadingTrivia(Tab),
+                                IdentifierName($"FilterBy{propertyName}")),
+                            BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
                 }
 
                 propertyName = filterProperties.Last();
                 return InvocationExpression(
-                    FilterChainInvocation(filterProperties.GetRange(0, filterProperties.Count - 1)),
-                    BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        FilterChainInvocation(filterProperties.Take(filterProperties.Count - 1).ToList())
+                            .WithTrailingTrivia(EndOfLine(Environment.NewLine)),
+                        Tokens.Dot.WithLeadingTrivia(Tab),
+                        IdentifierName($"FilterBy{propertyName}")),
+                    BaseSyntaxGenerator.SeparatedArgumentList(
+                        BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
             }
         }
 
