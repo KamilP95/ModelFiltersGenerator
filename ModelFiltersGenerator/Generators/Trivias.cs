@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace ModelFiltersGenerator.Generators
 {
-    internal static class Trivia
+    internal static class Trivias
     {
         internal static SyntaxTrivia EndOfLine => SyntaxFactory.EndOfLine(Environment.NewLine);
 

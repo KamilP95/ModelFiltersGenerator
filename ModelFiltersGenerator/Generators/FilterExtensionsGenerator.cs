@@ -68,9 +68,7 @@ namespace ModelFiltersGenerator.Generators
             return MethodDeclaration(returnType, methodName)
                 .WithParameterList(ParameterList(SeparatedList(parameters)))
                 .WithModifiers(TokenList(Tokens.PublicKeyword, Tokens.StaticKeyword))
-                .WithBody(body)
-                .WithTrailingTrivia(Tab)
-                .WithLeadingTrivia(EndOfLine(Environment.NewLine), EndOfLine(Environment.NewLine));
+                .WithBody(body);
         }
 
         internal static MethodDeclarationSyntax FilterExtensionMethod(
@@ -92,16 +90,11 @@ namespace ModelFiltersGenerator.Generators
             ExpressionSyntax filterExpression,
             ExpressionSyntax collectionExpression)
         {
-
-            var indentationTrivia = Trivia.Indentation(4).ToList();
-            indentationTrivia.Insert(0, Trivia.EndOfLine);
             return Block(
                 ReturnStatement(
                     ConditionalExpression(
-                        condition,
-                        Tokens.QuestionMark.WithLeadingTrivia(indentationTrivia),
-                        filterExpression,
-                        Tokens.Colon.WithLeadingTrivia(indentationTrivia),
+                        condition.WithTrailingTrivia(Trivias.EndOfLine),
+                        filterExpression.WithTrailingTrivia(Trivias.EndOfLine),
                         collectionExpression))
             );
         }
@@ -226,7 +219,7 @@ namespace ModelFiltersGenerator.Generators
                     return InvocationExpression(
                             MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
-                                IdentifierName(collectionName).WithTrailingTrivia(EndOfLine(Environment.NewLine)),
+                                IdentifierName(collectionName).WithTrailingTrivia(Trivias.EndOfLine),
                                 Tokens.Dot.WithLeadingTrivia(Tab),
                                 IdentifierName($"FilterBy{propertyName}")),
                             BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
@@ -237,7 +230,7 @@ namespace ModelFiltersGenerator.Generators
                     MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,
                         FilterChainInvocation(filterProperties.Take(filterProperties.Count - 1).ToList())
-                            .WithTrailingTrivia(EndOfLine(Environment.NewLine)),
+                            .WithTrailingTrivia(Trivias.EndOfLine),
                         Tokens.Dot.WithLeadingTrivia(Tab),
                         IdentifierName($"FilterBy{propertyName}")),
                     BaseSyntaxGenerator.SeparatedArgumentList(

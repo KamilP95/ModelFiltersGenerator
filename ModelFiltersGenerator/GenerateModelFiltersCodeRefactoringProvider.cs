@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,6 +7,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Simplification;
 using ModelFiltersGenerator.Generators;
 using ModelFiltersGenerator.Models;
 
@@ -32,7 +35,7 @@ namespace ModelFiltersGenerator
 
             var token = root.FindToken(textSpan.Start);
 
-            if (!CodeAnalyzer.IsClassNameToken(token))
+            if (!token.IsClassNameToken())
             {
                 return;
             }
@@ -46,31 +49,41 @@ namespace ModelFiltersGenerator
 
             var action = CodeAction.Create(
                 "Create filters for model",
-                ct => GenerateModelFiltersAsync(document, root, token, properties, semanticModel, ct),
+                ct => GenerateModelFiltersAsync(document.Project.Solution, document.Project.Id, root.GetNamespaceName(), token.Text, properties, ct),
                 equivalenceKey: nameof(GenerateModelFiltersCodeRefactoringProvider));
 
             context.RegisterRefactoring(action);
         }
 
-        private Task<Solution> GenerateModelFiltersAsync(
-            Document document,
-            CompilationUnitSyntax root,
-            SyntaxToken classNameToken,
+        private async Task<Solution> GenerateModelFiltersAsync(
+            Solution solution,
+            ProjectId projectId,
+            string namespaceName,
+            string className,
             IEnumerable<PropertyInfo> properties,
-            SemanticModel semanticModel,
             CancellationToken cancellationToken)
         {
-            return Task.Run(() =>
-            {
-                var solution = document.Project.Solution;
-                var className = classNameToken.Text;
-                var filterModelClass = FilterModelGenerator.FilterModelClass(className, properties);
-                var filterExtensionsClass = FilterExtensionsGenerator.FilterExtensionsClass(className, properties);
-                var filtersRoot = BaseSyntaxGenerator.CompilationUnit(root.GetNamespaceName(), filterModelClass, filterExtensionsClass);
-                var documentId = DocumentId.CreateNewId(document.Project.Id);
+            var filterModelClass = FilterModelGenerator.FilterModelClass(className, properties);
+            var filterExtensionsClass = FilterExtensionsGenerator.FilterExtensionsClass(className, properties);
+            var filtersRoot = BaseSyntaxGenerator.CompilationUnit(namespaceName, filterModelClass, filterExtensionsClass) as SyntaxNode;
+            var documentId = DocumentId.CreateNewId(projectId);
 
-                return solution.AddDocument(documentId, className + "Filters", filtersRoot);
-            }, cancellationToken);
+            solution = solution.AddDocument(documentId, className + "Filters", filtersRoot);
+
+            var newDoc = solution.GetDocument(documentId);
+
+            var options = solution.Workspace.Options
+                .WithChangedOption(FormattingOptions.IndentationSize, LanguageNames.CSharp, 3)
+                .WithChangedOption(FormattingOptions.UseTabs, LanguageNames.CSharp, true)
+                .WithChangedOption(FormattingOptions.NewLine, LanguageNames.CSharp, Environment.NewLine)
+                .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp, FormattingOptions.IndentStyle.Smart);
+
+            newDoc = await Simplifier.ReduceAsync(newDoc, Simplifier.Annotation, cancellationToken: cancellationToken).ConfigureAwait(false);
+            newDoc = await Formatter.FormatAsync(newDoc, Formatter.Annotation, options, cancellationToken).ConfigureAwait(false);
+
+            var formattedRoot = await newDoc.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+
+            return solution.WithDocumentSyntaxRoot(documentId, formattedRoot);
         }
     }
 }
