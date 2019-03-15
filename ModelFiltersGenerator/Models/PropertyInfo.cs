@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using ModelFiltersGenerator.Analyzers;
 
 namespace ModelFiltersGenerator.Models
 {
@@ -11,14 +12,13 @@ namespace ModelFiltersGenerator.Models
 
         public TypeSyntax TypeSyntax { get; }
 
-        public bool RangeFilter { get; }
+        public bool RangeFilter => TypeInfo.IsDateTime() || TypeInfo.IsNumericType();
 
-        public PropertyInfo(string name, TypeSyntax typeSyntax, ITypeSymbol typeInfo, bool rangeFilter)
+        public PropertyInfo(string name, TypeSyntax typeSyntax, ITypeSymbol typeInfo)
         {
             Name = name;
             TypeInfo = typeInfo;
             TypeSyntax = typeSyntax;
-            RangeFilter = rangeFilter;
         }
     }
 }

@@ -4,7 +4,9 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using ModelFiltersGenerator.Analyzers;
 using ModelFiltersGenerator.Models;
+using ModelFiltersGenerator.Utilities;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace ModelFiltersGenerator.Generators

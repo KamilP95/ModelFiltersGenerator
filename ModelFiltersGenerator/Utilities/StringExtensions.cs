@@ -1,4 +1,4 @@
-﻿namespace ModelFiltersGenerator
+﻿namespace ModelFiltersGenerator.Utilities
 {
     internal static class StringExtensions
     {
