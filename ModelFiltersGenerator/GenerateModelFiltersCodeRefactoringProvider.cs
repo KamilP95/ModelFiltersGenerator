@@ -49,7 +49,7 @@ namespace ModelFiltersGenerator
             }
 
             var action = CodeAction.Create(
-                "Create filters for model",
+                "Generate filters for model",
                 ct => GenerateModelFiltersAsync(document.Project.Solution, document.Project.Id, root.GetNamespaceName(), token.Text, properties, ct),
                 equivalenceKey: nameof(GenerateModelFiltersCodeRefactoringProvider));
 

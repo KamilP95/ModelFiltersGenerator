@@ -222,9 +222,9 @@ namespace ModelFiltersGenerator.Generators
                             MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
                                 IdentifierName(collectionName).WithTrailingTrivia(Trivias.EndOfLine),
-                                Tokens.Dot.WithLeadingTrivia(Tab),
-                                IdentifierName($"FilterBy{propertyName}")),
-                            BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
+                                IdentifierName($"FilterBy{propertyName}")).WithLeadingTrivia(Tab),
+                            BaseSyntaxGenerator.SeparatedArgumentList(BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")))
+                            .WithLeadingTrivia(Tab);
                 }
 
                 propertyName = filterProperties.Last();
@@ -233,10 +233,10 @@ namespace ModelFiltersGenerator.Generators
                         SyntaxKind.SimpleMemberAccessExpression,
                         FilterChainInvocation(filterProperties.Take(filterProperties.Count - 1).ToList())
                             .WithTrailingTrivia(Trivias.EndOfLine),
-                        Tokens.Dot.WithLeadingTrivia(Tab),
                         IdentifierName($"FilterBy{propertyName}")),
                     BaseSyntaxGenerator.SeparatedArgumentList(
-                        BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")));
+                        BaseSyntaxGenerator.SimpleMemberAccess($"filters.{propertyName}")))
+                    .WithLeadingTrivia(Tab);
             }
         }
 
