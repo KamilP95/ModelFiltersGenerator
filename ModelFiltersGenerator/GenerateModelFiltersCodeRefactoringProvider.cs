@@ -9,9 +9,11 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
+using Microsoft.VisualStudio.Shell;
 using ModelFiltersGenerator.Analyzers;
 using ModelFiltersGenerator.Generators;
 using ModelFiltersGenerator.Models;
+using Task = System.Threading.Tasks.Task;
 
 namespace ModelFiltersGenerator
 {
@@ -48,9 +50,9 @@ namespace ModelFiltersGenerator
                 return;
             }
 
-            var action = CodeAction.Create(
+            var action = CustomCodeAction.Create(
                 "Generate filters for model",
-                ct => GenerateModelFiltersAsync(document.Project.Solution, document.Project.Id, root.GetNamespaceName(), token.Text, properties, ct),
+                (ct, previewMode) => GenerateModelFiltersAsync(document.Project.Solution, document.Project.Id, root.GetNamespaceName(), token.Text, properties, previewMode, ct),
                 equivalenceKey: nameof(GenerateModelFiltersCodeRefactoringProvider));
 
             context.RegisterRefactoring(action);
@@ -62,8 +64,10 @@ namespace ModelFiltersGenerator
             string namespaceName,
             string className,
             IEnumerable<PropertyInfo> properties,
+            bool previewMode,
             CancellationToken cancellationToken)
         {
+
             var filterModelClass = FilterModelGenerator.FilterModelClass(className, properties);
             var filterExtensionsClass = FilterExtensionsGenerator.FilterExtensionsClass(className, properties);
             var filtersRoot = BaseSyntaxGenerator.CompilationUnit(namespaceName, filterModelClass, filterExtensionsClass) as SyntaxNode;
@@ -84,7 +88,70 @@ namespace ModelFiltersGenerator
 
             var formattedRoot = await newDoc.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
+            if (!previewMode)
+            {
+                ThreadHelper.Generic.BeginInvoke(() =>
+                {
+                    solution.Workspace.OpenDocument(documentId);
+                });
+            }
+
             return solution.WithDocumentSyntaxRoot(documentId, formattedRoot);
+        }
+    }
+
+    internal class CustomCodeAction : CodeAction
+    {
+        private readonly Func<CancellationToken, bool, Task<Solution>> createChangedSolution;
+
+        public override string EquivalenceKey { get; }
+        public override string Title { get; }
+
+        protected CustomCodeAction(string title, Func<CancellationToken, bool, Task<Solution>> createChangedSolution, string equivalenceKey = null)
+        {
+            this.createChangedSolution = createChangedSolution;
+
+            Title = title;
+            EquivalenceKey = equivalenceKey;
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="CustomCodeAction" /> for a change to more than one <see cref="Document" /> within a <see cref="Solution" />.
+        ///     Use this factory when the change is expensive to compute and should be deferred until requested.
+        /// </summary>
+        /// <param name="title">Title of the <see cref="CustomCodeAction" />.</param>
+        /// <param name="createChangedSolution">Function to create the <see cref="Solution" />.</param>
+        /// <param name="equivalenceKey">Optional value used to determine the equivalence of the <see cref="CustomCodeAction" /> with other <see cref="CustomCodeAction" />s. See <see cref="CustomCodeAction.EquivalenceKey" />.</param>
+        public static CustomCodeAction Create(string title, Func<CancellationToken, bool, Task<Solution>> createChangedSolution, string equivalenceKey = null)
+        {
+            if (title == null)
+                throw new ArgumentNullException(nameof(title));
+
+            if (createChangedSolution == null)
+                throw new ArgumentNullException(nameof(createChangedSolution));
+
+            return new CustomCodeAction(title, createChangedSolution, equivalenceKey);
+        }
+
+        protected override async Task<IEnumerable<CodeActionOperation>> ComputePreviewOperationsAsync(CancellationToken cancellationToken)
+        {
+            const bool isPreview = true;
+            var changedSolution = await GetChangedSolutionWithPreviewAsync(cancellationToken, isPreview).ConfigureAwait(false);
+
+            if (changedSolution == null) return null;
+
+            return new CodeActionOperation[] { new ApplyChangesOperation(changedSolution) };
+        }
+
+        protected override Task<Solution> GetChangedSolutionAsync(CancellationToken cancellationToken)
+        {
+            const bool isPreview = false;
+            return GetChangedSolutionWithPreviewAsync(cancellationToken, isPreview);
+        }
+
+        protected virtual Task<Solution> GetChangedSolutionWithPreviewAsync(CancellationToken cancellationToken, bool isPreview)
+        {
+            return createChangedSolution(cancellationToken, isPreview);
         }
     }
 }
