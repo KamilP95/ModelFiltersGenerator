@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
 using Microsoft.VisualStudio.Shell;
 using ModelFiltersGenerator.Analyzers;
+using ModelFiltersGenerator.Dialogs;
 using ModelFiltersGenerator.Generators;
 using ModelFiltersGenerator.Models;
 using Task = System.Threading.Tasks.Task;
@@ -67,6 +68,16 @@ namespace ModelFiltersGenerator
             bool previewMode,
             CancellationToken cancellationToken)
         {
+            if (!previewMode)
+            {
+                ThreadHelper.Generic.Invoke(() =>
+                {
+                    var dialog = new SelectPropertiesDialog(properties);
+                    dialog.ShowModal();
+                });
+
+                properties = properties.Where(p => p.Included);
+            }
 
             var filterModelClass = FilterModelGenerator.FilterModelClass(className, properties);
             var filterExtensionsClass = FilterExtensionsGenerator.FilterExtensionsClass(className, properties);

@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(MSBuildBinPath)\Microsoft.WinFX.targets" />
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
