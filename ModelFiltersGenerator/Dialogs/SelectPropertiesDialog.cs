@@ -40,7 +40,8 @@ namespace ModelFiltersGenerator.Dialogs
                 Content = "Ok",
                 Height = 30,
                 Width = 90,
-                Margin = new Thickness(0, 0, 10, 0)
+                Margin = new Thickness(0, 0, 10, 0),
+                IsDefault = true
             };
 
             okBtn.Click += OkBtn_Click;
@@ -135,19 +136,24 @@ namespace ModelFiltersGenerator.Dialogs
                 SelectedIndex = 0
             };
 
-            var binding = new Binding(nameof(PropertyInfo.FilterType)) { Source = property };
-            filterType.SetBinding(ComboBox.SelectedValueProperty, binding);
+            filterType.SelectionChanged += (sender, args) =>
+            {
+                if (args.AddedItems.Count == 0)
+                {
+                    return;
+                }
+
+                property.FilterType = (FilterType)((ComboBoxItem)args.AddedItems[0]).Content;
+            };
 
             if (property.TypeInfo.IsString())
             {
-                property.FilterType = FilterType.Contains;
                 filterType.Items.Add(new ComboBoxItem { Content = FilterType.Contains });
                 filterType.Items.Add(new ComboBoxItem { Content = FilterType.Equals });
 
                 return filterType;
             }
 
-            property.FilterType = FilterType.Range;
             filterType.Items.Add(new ComboBoxItem { Content = FilterType.Range });
             filterType.Items.Add(new ComboBoxItem { Content = FilterType.Equals });
 
@@ -156,11 +162,13 @@ namespace ModelFiltersGenerator.Dialogs
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
+            DialogResult = false;
             Close();
         }
 
         private void OkBtn_Click(object sender, RoutedEventArgs e)
         {
+            DialogResult = true;
             Close();
         }
     }

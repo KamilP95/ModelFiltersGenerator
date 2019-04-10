@@ -68,13 +68,20 @@ namespace ModelFiltersGenerator
             bool previewMode,
             CancellationToken cancellationToken)
         {
+            properties = properties.ToList();
             if (!previewMode)
             {
+                bool result = false;
                 ThreadHelper.Generic.Invoke(() =>
                 {
                     var dialog = new SelectPropertiesDialog(properties);
-                    dialog.ShowModal();
+                    result = dialog.ShowModal() ?? false;
                 });
+
+                if (!result)
+                {
+                    return solution;
+                }
 
                 properties = properties.Where(p => p.Included);
             }

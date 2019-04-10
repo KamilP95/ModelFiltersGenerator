@@ -38,14 +38,14 @@ namespace ModelFiltersGenerator.Generators
 
             foreach (var modelProperty in modelProperties)
             {
-                if (modelProperty.RangeFilter)
+                if (modelProperty.FilterType == FilterType.Range)
                 {
                     filterMethods.Add(RangeFromFilterExtensionMethod(collectionParameter, modelProperty));
                     filterMethods.Add(RangeToFilterExtensionMethod(collectionParameter, modelProperty));
                     continue;
                 }
 
-                if (modelProperty.TypeInfo.IsString())
+                if (modelProperty.FilterType == FilterType.Contains)
                 {
                     filterMethods.Add(StringContainsFilterExtensionMethod(collectionParameter, modelProperty));
                     continue;
@@ -172,10 +172,15 @@ namespace ModelFiltersGenerator.Generators
             PropertyInfo modelProperty)
         {
             var filterParameterName = modelProperty.Name.ToCamelCase();
-            var filterParameter = BaseSyntaxGenerator.Parameter(NullableType(modelProperty.TypeSyntax), filterParameterName);
+            var filterParameterType = modelProperty.TypeInfo.IsString()
+                ? modelProperty.TypeSyntax
+                : NullableType(modelProperty.TypeSyntax);
+            var filterParameter = BaseSyntaxGenerator.Parameter(filterParameterType, filterParameterName);
             var collectionName = collectionParameter.Identifier.Text;
 
-            var condition = NullableHasValueCheckExpression(filterParameterName);
+            var condition = modelProperty.TypeInfo.IsString()
+                ? StringNotEmptyCheckExpression(filterParameterName)
+                : NullableHasValueCheckExpression(filterParameterName);
             var filterExpression = LinqWhereExpression(
                 collectionName,
                 LambdaGenerator.EqualsPredicate(collectionName.Substring(0, 1), modelProperty.Name, filterParameterName));
@@ -197,7 +202,7 @@ namespace ModelFiltersGenerator.Generators
             var collectionName = collectionParameter.Identifier.Text;
             var filterPropertiesNames = modelProperties
                 .SelectMany(p =>
-                    p.RangeFilter
+                    p.FilterType == FilterType.Range
                         ? new[] { p.Name + "From", p.Name + "To" }
                         : new[] { p.Name })
                 .ToList();

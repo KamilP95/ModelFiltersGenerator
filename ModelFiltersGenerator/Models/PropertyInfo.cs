@@ -12,8 +12,6 @@ namespace ModelFiltersGenerator.Models
 
         public TypeSyntax TypeSyntax { get; }
 
-        public bool RangeFilter => TypeInfo.IsDateTime() || TypeInfo.IsNumericType();
-
         public bool Included { get; set; }
 
         public FilterType FilterType { get; set; }
@@ -23,8 +21,12 @@ namespace ModelFiltersGenerator.Models
             Name = name;
             TypeInfo = typeInfo;
             TypeSyntax = typeSyntax;
-            Included = typeInfo.IsString();
-            FilterType = FilterType.Equals;
+            Included = true;
+            FilterType = typeInfo.IsString()
+                ? FilterType.Contains
+                : typeInfo.IsNumericType() || typeInfo.IsDateTime()
+                    ? FilterType.Range
+                    : FilterType.Equals;
         }
     }
 

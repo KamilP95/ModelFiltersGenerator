@@ -30,7 +30,7 @@ namespace ModelFiltersGenerator.Generators
                                     ? property.TypeSyntax
                                     : NullableType(property.TypeSyntax);
 
-                if (property.RangeFilter)
+                if (property.FilterType == FilterType.Range)
                 {
 
                     filterProperties.Add(AutoProperty(property.Name + "From", propertyType));
